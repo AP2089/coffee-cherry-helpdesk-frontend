@@ -12,7 +12,7 @@ on:
           - production
 
 concurrency:
-  group: cicd-${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}
+  group: deploy-${{ inputs.environment }}
   cancel-in-progress: true
 
 jobs:
@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.environment == 'production' && 'main' || 'development' }}
 
       - uses: actions/setup-node@v5
         with:
@@ -28,7 +30,6 @@ jobs:
           cache: npm
 
       - run: npm ci --legacy-peer-deps
-
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
@@ -41,6 +42,8 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.environment == 'production' && 'main' || 'development' }}
 
       - name: Upload helpdesk to VPS
         uses: appleboy/scp-action@v0.1.7
