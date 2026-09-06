@@ -88,7 +88,7 @@ const errorMessage = computed(() => {
   }
 
   if (auth.error === 'Route not found') {
-    return 'Backend недоступен — проверьте, что сервер запущен на порту 3001'
+    return 'Backend недоступен — проверьте, что сервер запущен на порту 3013'
   }
 
   return auth.error || 'Не удалось войти'
