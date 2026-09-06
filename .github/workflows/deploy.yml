@@ -1,10 +1,18 @@
-name: Deploy Development
+name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - development
+          - production
 
 concurrency:
-  group: deploy-development-${{ github.workflow }}-${{ github.ref }}
+  group: deploy-${{ inputs.environment }}
   cancel-in-progress: true
 
 jobs:
@@ -14,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: development
+          ref: ${{ inputs.environment == 'production' && 'main' || 'development' }}
 
       - uses: actions/setup-node@v5
         with:
@@ -22,7 +30,6 @@ jobs:
           cache: npm
 
       - run: npm ci --legacy-peer-deps
-
       - run: npm run format:check
       - run: npm run lint
       - run: npm test
@@ -32,11 +39,11 @@ jobs:
     name: CD
     needs: ci
     runs-on: ubuntu-latest
-    environment: development
+    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: development
+          ref: ${{ inputs.environment == 'production' && 'main' || 'development' }}
 
       - name: Upload helpdesk to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -46,7 +53,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           source: '.'
-          target: /opt/coffee-cherry/development/helpdesk
+          target: /opt/coffee-cherry/${{ inputs.environment }}/helpdesk
           overwrite: true
 
       - name: Deploy helpdesk to VPS
@@ -59,6 +66,6 @@ jobs:
           command_timeout: 30m
           script: |
             set -e
-            cd /opt/coffee-cherry/development
+            cd /opt/coffee-cherry/${{ inputs.environment }}
             docker compose up -d --build helpdesk
             docker compose ps helpdesk
