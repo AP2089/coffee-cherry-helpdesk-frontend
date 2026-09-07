@@ -45,7 +45,7 @@ jobs:
         with:
           ref: ${{ inputs.environment == 'production' && 'main' || 'development' }}
 
-      - name: Upload helpdesk to VPS
+      - name: Upload helpdesk-frontend to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -53,10 +53,10 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           source: '.'
-          target: /opt/coffee-cherry/${{ inputs.environment }}/helpdesk
+          target: /opt/coffee-cherry/${{ inputs.environment }}/helpdesk/frontend
           overwrite: true
 
-      - name: Deploy helpdesk to VPS
+      - name: Deploy helpdesk-frontend to VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -67,5 +67,5 @@ jobs:
           script: |
             set -e
             cd /opt/coffee-cherry/${{ inputs.environment }}
-            docker compose up -d --build helpdesk
-            docker compose ps helpdesk
+            docker compose up -d --build helpdesk-frontend
+            docker compose ps helpdesk-frontend
