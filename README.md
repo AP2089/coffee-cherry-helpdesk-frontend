@@ -1,5 +1,11 @@
 # Coffee Cherry Helpdesk
 
+## Демо
+
+- URL: https://helpdesk.coffee-cherry.proskurin.site
+- Логин: `guest`
+- Пароль: `guest`
+
 ## Переменные окружения
 
 - `NUXT_API_URL` — URL API для SSR.
