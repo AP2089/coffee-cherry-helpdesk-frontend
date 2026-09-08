@@ -1,13 +1,19 @@
 import { defineStore } from 'pinia'
 import { UserRole, type AuthUser } from '~/types/chat'
 import { apiGetAuthMe, apiPostAuthLogin } from '~/api/auth'
-import { clearAuthToken, getAuthToken, saveAuthToken } from '~/composables/useApiBase'
+import {
+  clearAuthToken,
+  getAuthToken,
+  migrateAuthTokenFromLocalStorage,
+  saveAuthToken,
+} from '~/composables/useApiBase'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null as string | null,
     user: null as AuthUser | null,
     loading: false,
+    ready: false,
     error: null as string | null,
   }),
 
@@ -17,11 +23,15 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    hydrate() {
-      if (!import.meta.client) return
+    markReady() {
+      if (import.meta.client) {
+        this.ready = true
+      }
+    },
 
-      const token = getAuthToken()
-      this.token = token
+    hydrate() {
+      migrateAuthTokenFromLocalStorage()
+      this.token = getAuthToken()
     },
 
     async login(username: string, password: string) {

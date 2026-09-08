@@ -210,6 +210,15 @@ export const useInboxStore = defineStore('inbox', {
       }
     },
 
+    clearActiveConversation() {
+      this.activeSessionId = null
+      this.activeMeta = null
+      this.messages = []
+      this.messagesHasMore = false
+      this.loadingMessages = false
+      this.loadingMoreMessages = false
+    },
+
     async deleteConversation(sessionId: string) {
       if (this.deletingConversation) return
 
