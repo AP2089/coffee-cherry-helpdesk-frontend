@@ -1,9 +1,5 @@
 <template>
   <aside class="flex h-full min-h-0 flex-col overflow-hidden border-b border-border md:border-b-0">
-    <div class="shrink-0 border-b border-border px-4 py-3">
-      <p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">Диалоги</p>
-    </div>
-
     <div
       ref="listEl"
       class="inbox-list min-h-0 flex-1 overflow-y-auto"
@@ -16,7 +12,7 @@
           v-for="conversation in conversations"
           :key="conversation.sessionId"
           type="button"
-          class="inbox-list__item w-full border-b border-border px-4 py-3 text-left transition-colors duration-300 ease-premium"
+          class="inbox-list__item w-full cursor-pointer border-b border-border px-4 py-3 text-left transition-colors duration-300 ease-premium"
           :class="{ 'is-active': conversation.sessionId === activeSessionId }"
           @click="$emit('select', conversation.sessionId)"
         >
@@ -51,13 +47,6 @@
           class="px-4 py-3 text-center text-xs text-muted-foreground"
         >
           Загрузка…
-        </p>
-
-        <p
-          v-else-if="conversations.length && !hasMore"
-          class="px-4 py-3 text-center text-[10px] uppercase tracking-[0.08em] text-muted-foreground/50"
-        >
-          Все диалоги загружены
         </p>
       </template>
     </div>

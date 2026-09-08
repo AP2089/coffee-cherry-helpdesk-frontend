@@ -4,9 +4,21 @@
       <template v-if="meta">
         <div class="shrink-0 border-b border-border px-4 py-3 md:px-6">
           <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <p class="text-sm font-medium">{{ meta.guestName || 'Гость' }}</p>
-              <p class="text-xs text-muted-foreground">{{ meta.guestEmail }}</p>
+            <div class="flex min-w-0 items-start gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                class="mt-0.5 shrink-0 md:hidden"
+                aria-label="К списку диалогов"
+                @click="emit('back')"
+              >
+                <ArrowLeft class="size-4" />
+              </Button>
+              <div class="min-w-0">
+                <p class="text-sm font-medium">{{ meta.guestName || 'Гость' }}</p>
+                <p class="truncate text-xs text-muted-foreground">{{ meta.guestEmail }}</p>
+              </div>
             </div>
 
             <AlertDialogTrigger v-if="canDelete" as-child>
@@ -108,7 +120,7 @@
         </AlertDialogContent>
       </template>
 
-      <div v-else class="flex min-h-0 flex-1 items-center justify-center px-4 md:px-6">
+      <div v-else class="hidden min-h-0 flex-1 items-center justify-center px-4 md:flex md:px-6">
         <p class="text-sm text-muted-foreground">Выберите диалог слева</p>
       </div>
     </AlertDialog>
@@ -116,6 +128,7 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import type { ChatMessage, ChatSender, ConversationMeta } from '~/types/chat'
 
 const props = defineProps<{
@@ -132,6 +145,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   send: [text: string]
   delete: []
+  back: []
 }>()
 
 const inbox = useInboxStore()

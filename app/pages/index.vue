@@ -1,31 +1,21 @@
 <template>
   <div class="flex h-full min-h-0 flex-col">
-    <header
-      class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 md:px-6"
-    >
-      <div>
-        <BrandLogo />
-        <p class="mt-1 text-xs text-muted-foreground">
-          Helpdesk · {{ auth.user?.username }} · {{ auth.user?.role }}
-        </p>
-      </div>
-
-      <div class="flex items-center gap-4">
+    <LayoutAppHeader @logout="logout">
+      <template #actions>
         <Badge variant="status" :title="inbox.isConnected ? 'Онлайн' : 'Оффлайн'">
           <span
             class="h-2 w-2 rounded-full"
             :class="inbox.isConnected ? 'bg-success' : 'bg-destructive/80'"
           />
-          {{ inbox.isConnected ? 'Подключено' : 'Нет связи' }}
+          <span class="hidden sm:inline">{{ inbox.isConnected ? 'Подключено' : 'Нет связи' }}</span>
         </Badge>
-
-        <Button type="button" variant="magnetic" size="sm" @click="logout">Выйти</Button>
-      </div>
-    </header>
+      </template>
+    </LayoutAppHeader>
 
     <div class="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
       <InboxConversationList
         class="min-h-0 flex-1 md:h-full md:w-80 md:shrink-0 md:flex-none md:border-r md:border-border"
+        :class="{ 'max-md:hidden': showChatMobile }"
         :conversations="inbox.conversations"
         :active-session-id="inbox.activeSessionId"
         :loading="inbox.loadingConversations"
@@ -37,6 +27,7 @@
 
       <InboxChatPanel
         class="min-h-0 flex-1 overflow-hidden"
+        :class="{ 'max-md:hidden': !showChatMobile }"
         :meta="inbox.activeMeta"
         :messages="inbox.messages"
         :loading="inbox.loadingMessages"
@@ -47,6 +38,7 @@
         :deleting="inbox.deletingConversation"
         @send="sendReply"
         @delete="deleteConversation"
+        @back="backToList"
       />
     </div>
   </div>
@@ -63,8 +55,14 @@ const auth = useAuthStore()
 const inbox = useInboxStore()
 const { assertCanEdit } = useCanEdit()
 
+const showChatMobile = computed(() => Boolean(inbox.activeSessionId))
+
 async function selectConversation(sessionId: string) {
   await inbox.selectConversation(sessionId)
+}
+
+function backToList() {
+  inbox.clearActiveConversation()
 }
 
 function sendReply(text: string) {
@@ -86,12 +84,6 @@ async function logout() {
 }
 
 onMounted(async () => {
-  auth.hydrate()
-
-  if (!auth.user && auth.token) {
-    await auth.fetchMe()
-  }
-
   await inbox.fetchConversations()
   await inbox.connectSocket()
 })
