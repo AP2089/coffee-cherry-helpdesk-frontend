@@ -10,10 +10,16 @@ import {
   DialogPortal,
   useForwardPropsEmits,
 } from 'reka-ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 
-const props = defineProps<DialogContentProps & { class?: HTMLAttributes['class'] }>()
-const emits = defineEmits<DialogContentEmits>()
+interface IProps extends DialogContentProps {
+  class?: HTMLAttributes['class']
+}
+
+type IEmits = DialogContentEmits
+
+const props = defineProps<IProps>()
+const emits = defineEmits<IEmits>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 

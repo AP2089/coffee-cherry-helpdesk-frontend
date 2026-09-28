@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import type { BadgeVariants } from '.'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 import { badgeVariants } from '.'
 
-const props = defineProps<{
+interface IProps {
   variant?: BadgeVariants['variant']
   class?: HTMLAttributes['class']
-}>()
+}
+
+const props = defineProps<IProps>()
 </script>
 
 <template>

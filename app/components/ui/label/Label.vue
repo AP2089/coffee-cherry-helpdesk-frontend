@@ -3,9 +3,13 @@ import type { LabelProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
 import { Label } from 'reka-ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 
-const props = defineProps<LabelProps & { class?: HTMLAttributes['class'] }>()
+interface IProps extends LabelProps {
+  class?: HTMLAttributes['class']
+}
+
+const props = defineProps<IProps>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 </script>

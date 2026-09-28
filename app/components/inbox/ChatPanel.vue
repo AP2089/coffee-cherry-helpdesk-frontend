@@ -1,3 +1,117 @@
+<script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
+import type { ChatMessage, ChatSender, ConversationMeta } from '~/types/chat'
+
+interface IProps {
+  meta: ConversationMeta | null
+  messages: ChatMessage[]
+  loading: boolean
+  loadingMore: boolean
+  hasMore: boolean
+  canSend: boolean
+  canDelete: boolean
+  deleting: boolean
+}
+
+interface IEmits {
+  send: [text: string]
+  delete: []
+  back: []
+}
+
+const props = defineProps<IProps>()
+const emit = defineEmits<IEmits>()
+
+const inbox = useInboxStore()
+const { canEdit, assertCanEdit } = useCanEdit()
+const draft = ref('')
+const messagesEl = ref<HTMLElement | null>(null)
+const showDeleteConfirm = ref(false)
+
+function confirmDelete() {
+  if (!assertCanEdit()) return
+  emit('delete')
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
+function senderLabel(sender: ChatSender) {
+  if (sender === 'agent') {
+    return 'Саппорт'
+  }
+
+  return props.meta?.guestName || 'Пользователь'
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (!messagesEl.value) return
+    messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+  })
+}
+
+async function loadOlderMessages() {
+  const el = messagesEl.value
+  if (!el || inbox.loadingMessages || inbox.loadingMoreMessages || !inbox.messagesHasMore) return
+
+  const previousHeight = el.scrollHeight
+  await inbox.loadOlderMessages()
+
+  await nextTick()
+  if (!messagesEl.value) return
+  messagesEl.value.scrollTop = messagesEl.value.scrollHeight - previousHeight
+}
+
+const messagesScroll = useScrollLoad(() => messagesEl.value, loadOlderMessages, {
+  canLoadMore: () =>
+    inbox.messagesHasMore &&
+    !inbox.loadingMessages &&
+    !inbox.loadingMoreMessages &&
+    inbox.messages.length > 0,
+  isScrollTrigger: isNearScrollTop,
+})
+
+function onSendClick() {
+  if (!assertCanEdit()) return
+
+  const text = draft.value.trim()
+  if (!text || !props.canSend) return
+
+  emit('send', text)
+  draft.value = ''
+}
+
+watch(
+  () => props.messages.at(-1)?.id,
+  () => {
+    scrollToBottom()
+  },
+)
+
+watch(
+  () => props.meta?.sessionId,
+  async () => {
+    showDeleteConfirm.value = false
+    draft.value = ''
+    scrollToBottom()
+    await messagesScroll.ensureFilled((element) => element.scrollHeight <= element.clientHeight + 1)
+  },
+)
+
+watch(
+  () => [props.loading, props.hasMore] as const,
+  async ([loading, hasMore]) => {
+    if (loading || !hasMore) return
+    await messagesScroll.ensureFilled((element) => element.scrollHeight <= element.clientHeight + 1)
+  },
+)
+</script>
+
 <template>
   <section class="relative flex h-full min-h-0 flex-col overflow-hidden">
     <AlertDialog v-model:open="showDeleteConfirm">
@@ -89,15 +203,7 @@
               :disabled="canEdit && (!canSend || !draft.trim())"
               aria-label="Отправить"
             >
-              <svg
-                viewBox="0 0 24 24"
-                class="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12l14-7-7 14-2-5-5-2z" />
-              </svg>
+              <IconsSend class="h-4 w-4" />
             </Button>
           </div>
         </form>
@@ -126,117 +232,6 @@
     </AlertDialog>
   </section>
 </template>
-
-<script setup lang="ts">
-import { ArrowLeft } from 'lucide-vue-next'
-import type { ChatMessage, ChatSender, ConversationMeta } from '~/types/chat'
-
-const props = defineProps<{
-  meta: ConversationMeta | null
-  messages: ChatMessage[]
-  loading: boolean
-  loadingMore: boolean
-  hasMore: boolean
-  canSend: boolean
-  canDelete: boolean
-  deleting: boolean
-}>()
-
-const emit = defineEmits<{
-  send: [text: string]
-  delete: []
-  back: []
-}>()
-
-const inbox = useInboxStore()
-const { canEdit, assertCanEdit } = useCanEdit()
-const draft = ref('')
-const messagesEl = ref<HTMLElement | null>(null)
-const showDeleteConfirm = ref(false)
-
-function confirmDelete() {
-  if (!assertCanEdit()) return
-  emit('delete')
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
-
-function senderLabel(sender: ChatSender) {
-  if (sender === 'agent') {
-    return 'Саппорт'
-  }
-
-  return props.meta?.guestName || 'Пользователь'
-}
-
-function scrollToBottom() {
-  nextTick(() => {
-    if (!messagesEl.value) return
-    messagesEl.value.scrollTop = messagesEl.value.scrollHeight
-  })
-}
-
-async function loadOlderMessages() {
-  const el = messagesEl.value
-  if (!el || inbox.loadingMessages || inbox.loadingMoreMessages || !inbox.messagesHasMore) return
-
-  const previousHeight = el.scrollHeight
-  await inbox.loadOlderMessages()
-
-  await nextTick()
-  if (!messagesEl.value) return
-  messagesEl.value.scrollTop = messagesEl.value.scrollHeight - previousHeight
-}
-
-const messagesScroll = useScrollLoad(() => messagesEl.value, loadOlderMessages, {
-  canLoadMore: () =>
-    inbox.messagesHasMore &&
-    !inbox.loadingMessages &&
-    !inbox.loadingMoreMessages &&
-    inbox.messages.length > 0,
-  isScrollTrigger: isNearScrollTop,
-})
-
-function onSendClick() {
-  if (!assertCanEdit()) return
-
-  const text = draft.value.trim()
-  if (!text || !props.canSend) return
-
-  emit('send', text)
-  draft.value = ''
-}
-
-watch(
-  () => props.messages.at(-1)?.id,
-  () => {
-    scrollToBottom()
-  },
-)
-
-watch(
-  () => props.meta?.sessionId,
-  async () => {
-    showDeleteConfirm.value = false
-    draft.value = ''
-    scrollToBottom()
-    await messagesScroll.ensureFilled((element) => element.scrollHeight <= element.clientHeight + 1)
-  },
-)
-
-watch(
-  () => [props.loading, props.hasMore] as const,
-  async ([loading, hasMore]) => {
-    if (loading || !hasMore) return
-    await messagesScroll.ensureFilled((element) => element.scrollHeight <= element.clientHeight + 1)
-  },
-)
-</script>
 
 <style scoped lang="scss">
 .inbox-messages {

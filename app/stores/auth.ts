@@ -1,4 +1,5 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import { UserRole, type AuthUser } from '~/types/chat'
 import { apiGetAuthMe, apiPostAuthLogin } from '~/api/auth'
 import {
@@ -8,96 +9,111 @@ import {
   saveAuthToken,
 } from '~/composables/useApiBase'
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: null as string | null,
-    user: null as AuthUser | null,
-    loading: false,
-    ready: false,
-    error: null as string | null,
-  }),
+export const useAuthStore = defineStore('auth', () => {
+  const token = ref<string | null>(null)
+  const user = ref<AuthUser | null>(null)
+  const loading = ref(false)
+  const ready = ref(false)
+  const error = ref<string | null>(null)
 
-  getters: {
-    isAuthenticated: (state) => Boolean(state.token && state.user),
-    isGuest: (state) => state.user?.role === UserRole.Guest || state.user?.username === 'guest',
-  },
+  const isAuthenticated = computed(() => Boolean(token.value && user.value))
+  const isGuest = computed(
+    () => user.value?.role === UserRole.Guest || user.value?.username === 'guest',
+  )
 
-  actions: {
-    markReady() {
-      if (import.meta.client) {
-        this.ready = true
+  function markReady() {
+    if (import.meta.client) {
+      ready.value = true
+    }
+  }
+
+  function hydrate() {
+    migrateAuthTokenFromLocalStorage()
+    token.value = getAuthToken()
+  }
+
+  async function login(username: string, password: string) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await apiPostAuthLogin({ username, password })
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Login failed')
       }
-    },
 
-    hydrate() {
-      migrateAuthTokenFromLocalStorage()
-      this.token = getAuthToken()
-    },
-
-    async login(username: string, password: string) {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await apiPostAuthLogin({ username, password })
-
-        if (!response.success || !response.data) {
-          throw new Error(response.message || 'Login failed')
-        }
-
-        this.token = response.data.token
-        this.user = response.data.user
-        saveAuthToken(response.data.token)
-      } catch (error) {
-        this.token = null
-        this.user = null
-        clearAuthToken()
-
-        const fetchError = error as {
-          data?: { message?: string }
-          statusCode?: number
-          message?: string
-        }
-
-        if (fetchError.statusCode === 401) {
-          this.error = 'Неверный логин или пароль'
-        } else if (fetchError.data?.message) {
-          this.error = fetchError.data.message
-        } else if (fetchError.message?.includes('fetch')) {
-          this.error = 'Не удалось подключиться к серверу'
-        } else {
-          this.error = 'Не удалось войти'
-        }
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async fetchMe() {
-      if (!this.token) return
-
-      try {
-        const response = await apiGetAuthMe({
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
-        })
-
-        if (!response.success || !response.data) {
-          throw new Error('Unauthorized')
-        }
-
-        this.user = response.data
-      } catch {
-        this.logout()
-      }
-    },
-
-    logout() {
-      this.token = null
-      this.user = null
+      token.value = response.data.token
+      user.value = response.data.user
+      saveAuthToken(response.data.token)
+    } catch (err) {
+      token.value = null
+      user.value = null
       clearAuthToken()
-    },
-  },
+
+      const fetchError = err as {
+        data?: { message?: string }
+        statusCode?: number
+        message?: string
+      }
+
+      if (fetchError.statusCode === 401) {
+        error.value = 'Неверный логин или пароль'
+      } else if (fetchError.data?.message) {
+        error.value = fetchError.data.message
+      } else if (fetchError.message?.includes('fetch')) {
+        error.value = 'Не удалось подключиться к серверу'
+      } else {
+        error.value = 'Не удалось войти'
+      }
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchMe() {
+    if (!token.value) return
+
+    try {
+      const response = await apiGetAuthMe({
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      })
+
+      if (!response.success || !response.data) {
+        throw new Error('Unauthorized')
+      }
+
+      user.value = response.data
+    } catch {
+      logout()
+    }
+  }
+
+  function logout() {
+    token.value = null
+    user.value = null
+    clearAuthToken()
+  }
+
+  return {
+    token,
+    user,
+    loading,
+    ready,
+    error,
+    isAuthenticated,
+    isGuest,
+    markReady,
+    hydrate,
+    login,
+    fetchMe,
+    logout,
+  }
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot))
+}

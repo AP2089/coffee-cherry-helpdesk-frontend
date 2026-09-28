@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 
-const props = defineProps<{
+interface IProps {
   class?: HTMLAttributes['class']
-}>()
+}
+
+const props = defineProps<IProps>()
 </script>
 
 <template>

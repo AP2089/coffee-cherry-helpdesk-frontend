@@ -3,9 +3,13 @@ import type { AlertDialogTitleProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
 import { AlertDialogTitle } from 'reka-ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 
-const props = defineProps<AlertDialogTitleProps & { class?: HTMLAttributes['class'] }>()
+interface IProps extends AlertDialogTitleProps {
+  class?: HTMLAttributes['class']
+}
+
+const props = defineProps<IProps>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 </script>

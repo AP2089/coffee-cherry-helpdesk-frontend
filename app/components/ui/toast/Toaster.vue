@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const { toasts } = useToast()
+</script>
+
 <template>
   <Teleport to="body">
     <div
@@ -24,7 +28,3 @@
     </div>
   </Teleport>
 </template>
-
-<script setup lang="ts">
-const { toasts } = useToast()
-</script>

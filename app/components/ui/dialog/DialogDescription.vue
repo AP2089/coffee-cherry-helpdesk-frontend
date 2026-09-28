@@ -3,9 +3,13 @@ import type { DialogDescriptionProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
 import { DialogDescription, useForwardProps } from 'reka-ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 
-const props = defineProps<DialogDescriptionProps & { class?: HTMLAttributes['class'] }>()
+interface IProps extends DialogDescriptionProps {
+  class?: HTMLAttributes['class']
+}
+
+const props = defineProps<IProps>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 

@@ -1,73 +1,21 @@
-<template>
-  <aside class="flex h-full min-h-0 flex-col overflow-hidden border-b border-border md:border-b-0">
-    <div
-      ref="listEl"
-      class="inbox-list min-h-0 flex-1 overflow-y-auto"
-      @scroll="listScroll.onScroll"
-    >
-      <p v-if="loading" class="px-4 py-6 text-sm text-muted-foreground">Загрузка…</p>
-
-      <template v-if="!loading">
-        <button
-          v-for="conversation in conversations"
-          :key="conversation.sessionId"
-          type="button"
-          class="inbox-list__item w-full cursor-pointer border-b border-border px-4 py-3 text-left transition-colors duration-300 ease-premium"
-          :class="{ 'is-active': conversation.sessionId === activeSessionId }"
-          @click="$emit('select', conversation.sessionId)"
-        >
-          <div class="flex items-start justify-between gap-2">
-            <p class="truncate text-sm font-medium">
-              {{ conversation.guestName || 'Гость' }}
-            </p>
-            <Badge v-if="unreadBySession[conversation.sessionId]" variant="unread">
-              {{ unreadBySession[conversation.sessionId] }}
-            </Badge>
-          </div>
-
-          <p class="mt-0.5 truncate text-xs text-muted-foreground">
-            {{ conversation.guestEmail || conversation.sessionId.slice(0, 8) }}
-          </p>
-
-          <p v-if="conversation.lastMessage" class="mt-2 line-clamp-2 text-xs text-foreground/55">
-            {{ conversation.lastMessage.text }}
-          </p>
-
-          <p class="mt-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground/70">
-            {{ formatTime(conversation.updatedAt) }}
-          </p>
-        </button>
-
-        <p v-if="!conversations.length" class="px-4 py-6 text-sm text-muted-foreground">
-          Пока нет обращений
-        </p>
-
-        <p
-          v-if="conversations.length && loadingMore"
-          class="px-4 py-3 text-center text-xs text-muted-foreground"
-        >
-          Загрузка…
-        </p>
-      </template>
-    </div>
-  </aside>
-</template>
-
 <script setup lang="ts">
 import type { ConversationListItem } from '~/types/chat'
 
-const props = defineProps<{
+interface IProps {
   conversations: ConversationListItem[]
   activeSessionId: string | null
   loading: boolean
   loadingMore: boolean
   hasMore: boolean
   unreadBySession: Record<string, number>
-}>()
+}
 
-defineEmits<{
+interface IEmits {
   select: [sessionId: string]
-}>()
+}
+
+const props = defineProps<IProps>()
+const emit = defineEmits<IEmits>()
 
 const inbox = useInboxStore()
 const listEl = ref<HTMLElement | null>(null)
@@ -110,6 +58,61 @@ function formatTime(value: string) {
   }).format(new Date(value))
 }
 </script>
+
+<template>
+  <aside class="flex h-full min-h-0 flex-col overflow-hidden border-b border-border md:border-b-0">
+    <div
+      ref="listEl"
+      class="inbox-list min-h-0 flex-1 overflow-y-auto"
+      @scroll="listScroll.onScroll"
+    >
+      <p v-if="loading" class="px-4 py-6 text-sm text-muted-foreground">Загрузка…</p>
+
+      <template v-if="!loading">
+        <button
+          v-for="conversation in conversations"
+          :key="conversation.sessionId"
+          type="button"
+          class="inbox-list__item w-full cursor-pointer border-b border-border px-4 py-3 text-left transition-colors duration-300 ease-premium"
+          :class="{ 'is-active': conversation.sessionId === activeSessionId }"
+          @click="emit('select', conversation.sessionId)"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <p class="truncate text-sm font-medium">
+              {{ conversation.guestName || 'Гость' }}
+            </p>
+            <Badge v-if="unreadBySession[conversation.sessionId]" variant="unread">
+              {{ unreadBySession[conversation.sessionId] }}
+            </Badge>
+          </div>
+
+          <p class="mt-0.5 truncate text-xs text-muted-foreground">
+            {{ conversation.guestEmail || conversation.sessionId.slice(0, 8) }}
+          </p>
+
+          <p v-if="conversation.lastMessage" class="mt-2 line-clamp-2 text-xs text-foreground/55">
+            {{ conversation.lastMessage.text }}
+          </p>
+
+          <p class="mt-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground/70">
+            {{ formatTime(conversation.updatedAt) }}
+          </p>
+        </button>
+
+        <p v-if="!conversations.length" class="px-4 py-6 text-sm text-muted-foreground">
+          Пока нет обращений
+        </p>
+
+        <p
+          v-if="conversations.length && loadingMore"
+          class="px-4 py-3 text-center text-xs text-muted-foreground"
+        >
+          Загрузка…
+        </p>
+      </template>
+    </div>
+  </aside>
+</template>
 
 <style scoped lang="scss">
 .inbox-list {

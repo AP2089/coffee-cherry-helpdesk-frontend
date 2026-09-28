@@ -1,3 +1,22 @@
+<script setup lang="ts">
+import { UserRole } from '~/types/chat'
+
+interface IEmits {
+  logout: []
+}
+
+const emit = defineEmits<IEmits>()
+
+const auth = useAuthStore()
+
+const roleLabel = computed(() => {
+  if (auth.user?.role === UserRole.Admin) return 'Администратор'
+  if (auth.isGuest) return 'Гость'
+  if (auth.user?.role === UserRole.Manager) return 'Менеджер'
+  return 'Оператор'
+})
+</script>
+
 <template>
   <header
     class="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4 py-3 md:gap-4 md:px-6"
@@ -19,20 +38,3 @@
     </div>
   </header>
 </template>
-
-<script setup lang="ts">
-import { UserRole } from '~/types/chat'
-
-const emit = defineEmits<{
-  logout: []
-}>()
-
-const auth = useAuthStore()
-
-const roleLabel = computed(() => {
-  if (auth.user?.role === UserRole.Admin) return 'Администратор'
-  if (auth.isGuest) return 'Гость'
-  if (auth.user?.role === UserRole.Manager) return 'Менеджер'
-  return 'Оператор'
-})
-</script>

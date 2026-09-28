@@ -3,10 +3,14 @@ import type { AlertDialogCancelProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
 import { AlertDialogCancel } from 'reka-ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils/cn'
 import { buttonVariants } from '@/components/ui/button'
 
-const props = defineProps<AlertDialogCancelProps & { class?: HTMLAttributes['class'] }>()
+interface IProps extends AlertDialogCancelProps {
+  class?: HTMLAttributes['class']
+}
+
+const props = defineProps<IProps>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 </script>

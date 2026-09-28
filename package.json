@@ -26,7 +26,6 @@
     ]
   },
   "dependencies": {
-    "@lucide/vue": "^1.37.0",
     "@pinia/nuxt": "^1.0.2",
     "@tailwindcss/vite": "^4.3.3",
     "@vee-validate/zod": "^4.15.1",
